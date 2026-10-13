@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Darkspire — a rogue-lite RPG</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="game">
+
+  <!-- ============ START MENU ============ -->
+  <div class="screen active" id="screen-menu">
+    <div class="menu-inner">
+      <h1 class="game-title">DARKSPIRE</h1>
+      <div class="subtitle">a rogue-lite card crawl</div>
+      <canvas id="menu-sprite" width="192" height="192"></canvas>
+      <button class="btn big" id="btn-continue" style="display:none">CONTINUE</button>
+      <button class="btn big" id="btn-start">NEW GAME</button>
+      <button class="btn" id="btn-how">HOW TO PLAY</button>
+      <button class="btn danger" id="btn-reset" style="display:none">RESET SAVE</button>
+      <div class="version">placeholder art — v1.1</div>
+    </div>
+  </div>
+
+  <!-- ============ HOW TO PLAY ============ -->
+  <div class="screen" id="screen-how">
+    <div class="panel">
+      <h2>HOW TO PLAY</h2>
+      <div id="how-text"></div>
+      <button class="btn" id="btn-how-back">BACK</button>
+    </div>
+  </div>
+
+  <!-- ============ CHARACTER SELECT ============ -->
+  <div class="screen" id="screen-select">
+    <h2 class="screen-title">CHOOSE YOUR HERO</h2>
+    <div id="char-row"></div>
+    <div id="char-detail" class="panel"></div>
+    <div class="row-center">
+      <button class="btn" id="btn-select-back">BACK</button>
+      <button class="btn big" id="btn-embark" disabled>EMBARK</button>
+    </div>
+  </div>
+
+  <!-- ============ MAP ============ -->
+  <div class="screen" id="screen-map">
+    <div id="hud"></div>
+    <div id="map-scroll">
+      <div id="map-wrap">
+        <svg id="map-edges"></svg>
+        <div id="map-nodes"></div>
+      </div>
+    </div>
+    <div id="map-footer"></div>
+  </div>
+
+  <!-- ============ COMBAT ============ -->
+  <div class="screen" id="screen-combat">
+    <div id="hud-combat"></div>
+    <div id="battlefield">
+      <div id="ally-side">
+        <div id="player-unit" class="unit"></div>
+        <div id="companion-unit" class="unit"></div>
+      </div>
+      <div id="enemy-side"></div>
+    </div>
+    <div id="combat-log"></div>
+    <div id="hand-area">
+      <div id="hand-top">
+        <div id="energy-orb"></div>
+        <div id="pile-info"></div>
+        <button class="btn" id="btn-end-turn">END TURN ⏭</button>
+      </div>
+      <div id="hand"></div>
+    </div>
+  </div>
+
+  <!-- ============ GENERIC EVENT / MERCHANT / REST / CHEST / REWARD ============ -->
+  <div class="screen" id="screen-event">
+    <div class="panel" id="event-panel"></div>
+  </div>
+
+  <!-- ============ CARD PICKER (rewards, upgrades, removal, shop) ============ -->
+  <div class="screen" id="screen-cards">
+    <div class="panel wide">
+      <h2 id="cards-title"></h2>
+      <div id="cards-grid"></div>
+      <button class="btn" id="btn-cards-skip">SKIP</button>
+    </div>
+  </div>
+
+  <!-- ============ CUTSCENE ============ -->
+  <div class="screen" id="screen-cutscene">
+    <div id="cutscene-stage">
+      <canvas id="cutscene-canvas" width="256" height="160"></canvas>
+      <div id="cutscene-text"></div>
+      <button class="btn" id="btn-cutscene-next">▶</button>
+    </div>
+  </div>
+
+  <!-- ============ RESULTS / SCORE ============ -->
+  <div class="screen" id="screen-results">
+    <div class="panel">
+      <h2 id="results-title"></h2>
+      <div id="score-big"></div>
+      <div id="stats-grid"></div>
+      <button class="btn big" id="btn-again">PLAY AGAIN</button>
+      <button class="btn" id="btn-menu">MAIN MENU</button>
+    </div>
+  </div>
+
+  <!-- ============ MINIGAME ============ -->
+  <div class="screen" id="screen-minigame">
+    <div id="mg-header"><span id="mg-title"></span><span id="mg-info"></span></div>
+    <canvas id="mg-canvas" width="320" height="180"></canvas>
+    <div id="mg-help"></div>
+    <div id="mg-controls">
+      <button class="btn mgbtn" id="mg-btn-a">JUMP</button>
+      <button class="btn mgbtn" id="mg-btn-b">ATTACK</button>
+    </div>
+  </div>
+
+  <!-- global mute toggle -->
+  <button id="btn-mute">🔊</button>
+
+  <!-- floating toast -->
+  <div id="toast"></div>
+</div>
+
+<script src="data.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
