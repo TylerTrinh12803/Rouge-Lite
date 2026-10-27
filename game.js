@@ -103,8 +103,8 @@ function startRun(charId) {
     charId, char: c,
     hp: c.maxHp, maxHp: c.maxHp, gold: 50,
     deck: c.starterCards.map(k => ({ key: k, up: false, uid: Math.random() })),
-    relics: [], companion: null, potions: ['healpot'],
-    act: 0, map: null, nodeId: null, seenCompanionOffer: false,
+    relics: c.relic ? [c.relic] : [], companion: null, potions: ['healpot'],
+    act: 0, map: null, nodeId: null, seenCompanionOffer: false, purgeCount: 0,
     stats: newStats(),
   };
   playCutscene('intro', () => { buildAct(0); });
@@ -113,7 +113,7 @@ function startRun(charId) {
 /* ============================================================
    SAVE / LOAD — one save slot in localStorage
    ============================================================ */
-const SAVE_KEY = 'darkspire_save_v1';
+const SAVE_KEY = 'darkspire_save_v2'; // v2: new hero roster — v1 saves reference removed cards
 function saveRun() {
   if (!run) return;
   try {
@@ -184,6 +184,8 @@ function grantRelic(key) {
   sfx('gold');
 }
 function hasRelic(k) { return run.relics.includes(k); }
+// relics that can still be found or bought (hero starting relics never drop)
+function unownedRelics() { return Object.keys(RELICS).filter(k => !RELICS[k].starter && !hasRelic(k)); }
 
 function gainGold(n) { run.gold += n; run.stats.goldEarned += n; }
 function healPlayer(n) {
@@ -285,7 +287,7 @@ function reachableNodes() {
 }
 
 function renderHud(elId) {
-  const relicStr = run.relics.map(k => RELICS[k].icon).join(' ');
+  const relicStr = run.relics.map(k => `<span class="relic-chip" data-relic="${k}" title="${RELICS[k].name}: ${RELICS[k].desc}">${RELICS[k].icon}</span>`).join(' ');
   const comp = run.companion ? ` 🤝${run.companion.name.split(' ')[0]}` : '';
   let potStr = '';
   for (let i = 0; i < MAX_POTIONS; i++) {
@@ -302,6 +304,9 @@ function renderHud(elId) {
     `<span class="hud-relic">${relicStr}</span>`;
   $(elId).querySelectorAll('.potion-chip[data-pot]').forEach(chip => {
     chip.onclick = () => { sfx('click'); usePotion(+chip.dataset.pot); };
+  });
+  $(elId).querySelectorAll('.relic-chip').forEach(chip => {
+    chip.onclick = () => { const r = RELICS[chip.dataset.relic]; toast(`${r.icon} ${r.name}: ${r.desc}`); };
   });
 }
 
@@ -389,6 +394,7 @@ function makeEnemy(key, slot) {
   return {
     key, def, slot, uid: 'e' + slot + Math.random(),
     hp, maxHp: hp, block: 0, str: 0, weak: 0, vuln: 0, poison: 0,
+    stun: 0, constrict: 0, seed: 0,
     moveIdx: randInt(0, def.moves.length - 1), intent: null, alive: true,
   };
 }
@@ -401,10 +407,17 @@ function startCombat(encounterKeys, isBoss) {
     hand: [], discard: [], exhausted: [],
     energy: 3, maxEnergy: 3,
     pBlock: 0, pStr: hasRelic('emberring') ? 1 : 0, pWeak: 0, pVuln: 0,
+    pDex: 0, pFly: 0, energyPerTurn: 0, attackCount: 0, escapeUsed: false,
     turn: 0, selected: null, busy: false, over: false,
   };
   if (hasRelic('stonescale')) { cb.pBlock = 5; run.stats.blockGained += 5; }
   if (hasRelic('bloodvial')) healPlayer(4);
+  if (hasRelic('holycross')) cb.pDex += TUNING.crossDex;
+  if (hasRelic('feathercharm')) cb.pDex += 1;
+  if (hasRelic('butterflywings')) cb.pFly = TUNING.wingsFly;
+  if (hasRelic('emptybottle')) {
+    for (let i = 0; i < TUNING.bottlePotions && run.potions.length < MAX_POTIONS; i++) gainPotion(randomPotion());
+  }
   for (const e of cb.enemies) rollIntent(e);
   buildCombatUI();
   showScreen('screen-combat');
@@ -417,10 +430,11 @@ function rollIntent(e) {
   e.intent = e.def.moves[e.moveIdx];
 }
 function intentText(e) {
+  if (e.stun > 0) return '💫 Stunned';
   const m = e.intent;
   const parts = [];
   if (m.dmg) {
-    let d = m.dmg + e.str;
+    let d = Math.max(0, m.dmg + e.str);
     if (e.weak > 0) d = Math.floor(d * 0.75);
     parts.push(`🗡️${d}${m.hits ? '×' + m.hits : ''}`);
   }
@@ -492,8 +506,12 @@ function updateCombatUI() {
   p.querySelector('.hptext').textContent = `${run.hp}/${run.maxHp}`;
   const pbits = [];
   if (cb.pStr > 0) pbits.push('💪' + cb.pStr);
+  if (cb.pDex > 0) pbits.push('💨' + cb.pDex);
+  if (cb.pFly > 0) pbits.push('🦋' + cb.pFly);
+  if (cb.energyPerTurn > 0) pbits.push('⚡+' + cb.energyPerTurn);
   if (cb.pWeak > 0) pbits.push('🌀' + cb.pWeak);
   if (cb.pVuln > 0) pbits.push('🎯' + cb.pVuln);
+  if (hasRelic('ammobelt')) pbits.push(`🔫${cb.attackCount % TUNING.ammoEvery}/${TUNING.ammoEvery}`);
   p.querySelector('.status-row').textContent = pbits.join(' ');
   const pchip = p.querySelector('.blockchip');
   pchip.style.display = cb.pBlock > 0 ? 'flex' : 'none';
@@ -506,10 +524,13 @@ function updateCombatUI() {
     d.querySelector('.hptext').textContent = `${e.hp}/${e.maxHp}`;
     d.querySelector('.intent').textContent = intentText(e);
     const ebits = [];
-    if (e.str > 0) ebits.push('💪' + e.str);
+    if (e.str !== 0) ebits.push('💪' + e.str);
     if (e.poison > 0) ebits.push('☠' + e.poison);
+    if (e.constrict > 0) ebits.push('⛓️' + e.constrict);
+    if (e.seed > 0) ebits.push('🌱' + e.seed);
     if (e.weak > 0) ebits.push('🌀' + e.weak);
     if (e.vuln > 0) ebits.push('🎯' + e.vuln);
+    if (e.stun > 0) ebits.push('💫');
     d.querySelector('.status-row').textContent = ebits.join(' ');
     const chip = d.querySelector('.blockchip');
     chip.style.display = e.block > 0 ? 'flex' : 'none';
@@ -519,6 +540,7 @@ function updateCombatUI() {
   // energy + piles
   $('energy-orb').textContent = `${cb.energy}/${cb.maxEnergy}`;
   $('pile-info').innerHTML = `Draw: ${cb.drawPile.length} · Discard: ${cb.discard.length}`;
+  $('btn-escape').style.display = canEscape() ? '' : 'none';
   renderHand();
 }
 
@@ -531,9 +553,11 @@ function renderHand() {
     d.className = `card ${c.type}` + (c.upgraded ? ' upgraded' : '');
     if (c.cost > cb.energy) d.classList.add('unplayable');
     if (cb.selected === inst) d.classList.add('selected-card');
+    // show Block as it will actually land, including Dexterity
+    const shown = c.block ? Object.assign({}, c, { block: Math.max(0, c.block + cb.pDex) }) : c;
     d.innerHTML = `<div class="ccost">${c.cost}</div><div class="ctitle">${c.name}${c.upgraded ? '+' : ''}</div>
       <div class="ctype">${{atk:'Attack',skl:'Skill',pow:'Power'}[c.type]}</div>
-      <div class="cdesc">${cardDesc(c)}</div>`;
+      <div class="cdesc">${cardDesc(shown)}</div>`;
     d.onclick = (ev) => { ev.stopPropagation(); onCardTap(inst); };
     h.appendChild(d);
   }
@@ -553,14 +577,23 @@ function drawCards(n) {
   }
 }
 
+// generated cards (Bullets): straight into hand; overflow goes to the discard pile
+function addToHand(key, n) {
+  for (let i = 0; i < n; i++) {
+    const inst = { key, up: false, uid: Math.random() };
+    (cb.hand.length < TUNING.handMax ? cb.hand : cb.discard).push(inst);
+  }
+}
+
 function startPlayerTurn() {
   if (cb.over) return;
   cb.turn++;
   run.stats.turnsPlayed++;
   cb.pBlock = 0;
-  cb.energy = cb.maxEnergy;
+  const first = cb.turn === 1;
+  cb.energy = cb.maxEnergy + cb.energyPerTurn + (first && hasRelic('warhorn') ? 1 : 0);
   cb.selected = null;
-  drawCards(5);
+  drawCards(5 + (first && hasRelic('hourglass') ? 2 : 0));
   companionAct();
   if (checkCombatEnd()) return;
   cb.busy = false;
@@ -575,16 +608,25 @@ function companionAct() {
   const t = pick(alive);
   const pEl = $('player-unit');
   switch (run.companion.id) {
-    case 'knight':
-      cb.pBlock += 4; run.stats.blockGained += 4;
-      floatText(pEl, '+4🛡️', 'blockf'); break;
-    case 'witch':
-      hitEnemy(t, 6, true); floatText(pEl, '🤝⚡', 'blockf'); break;
-    case 'cultist':
-      hitEnemy(t, 8, true);
-      loseHp(2); break;
-    case 'ranger':
+    case 'alchemist':
+      hitEnemy(t, 4, true);
+      if (t.alive) t.vuln += 1;
+      floatText(pEl, '🤝🧪', 'blockf'); break;
+    case 'gunslinger':
+      for (let s = 0; s < 2; s++) {
+        const live = cb.enemies.filter(e => e.alive);
+        if (live.length) hitEnemy(pick(live), 3, true);
+      }
+      break;
+    case 'ninja':
       t.poison += 3; floatText(cb.enemyEls[t.uid], '+3☠', 'healf'); break;
+    case 'fae': {
+      const r = enemyLoseHp(t, 3);
+      floatText(cb.enemyEls[t.uid], '-' + r + '🌱', 'healf');
+      const h = healPlayer(r);
+      if (h > 0) floatText(pEl, '+' + h + '❤️', 'healf');
+      break;
+    }
     case 'priest': {
       const r = healPlayer(4);
       if (r > 0) floatText(pEl, '+' + r + '❤️', 'healf');
@@ -593,8 +635,11 @@ function companionAct() {
   }
 }
 
+const ENEMY_FX = ['dmg', 'poison', 'weak', 'vuln', 'strDown', 'stun', 'constrict', 'seed'];
+const touchesEnemy = fx => ENEMY_FX.some(k => fx[k]);
 function cardNeedsTarget(c) {
-  return !c.aoe && !!(c.dmg || c.poison || c.weak || c.vuln);
+  if (c.aoe) return false;
+  return touchesEnemy(c) || !!(c.choice && c.choice.some(o => touchesEnemy(o.fx)));
 }
 
 function onCardTap(inst) {
@@ -618,7 +663,7 @@ function onEnemyTap(e) {
 
 function hitEnemy(e, base, flat) {
   // flat = ignore player str/weak (companion hits)
-  let amt = flat ? base : base + cb.pStr;
+  let amt = Math.max(0, flat ? base : base + cb.pStr);
   if (!flat && cb.pWeak > 0) amt = Math.floor(amt * 0.75);
   if (e.vuln > 0) amt = Math.floor(amt * 1.5);
   const blocked = Math.min(e.block, amt);
@@ -632,12 +677,25 @@ function hitEnemy(e, base, flat) {
     floatText(el, hpLoss > 0 ? '-' + hpLoss : '🛡️', hpLoss > 0 ? '' : 'blockf');
   }
   sfx(hpLoss > 0 ? 'hit' : 'block');
-  if (e.hp <= 0 && e.alive) {
-    e.alive = false; e.hp = 0;
-    run.stats.enemiesSlain++;
-    if (e.def.boss) run.stats.bossesSlain++;
-    sfx('death');
-  }
+  if (e.hp <= 0) killEnemy(e);
+  return hpLoss;
+}
+
+function killEnemy(e) {
+  if (!e.alive) return;
+  e.alive = false; e.hp = 0;
+  run.stats.enemiesSlain++;
+  if (e.def.boss) run.stats.bossesSlain++;
+  sfx('death');
+}
+
+// unblockable status damage (poison, constrict, leech seed); returns HP actually lost
+function enemyLoseHp(e, n) {
+  const real = Math.min(n, e.hp);
+  e.hp -= n;
+  run.stats.dmgDealt += real;
+  if (e.hp <= 0) killEnemy(e);
+  return real;
 }
 
 function loseHp(n) {
@@ -648,39 +706,115 @@ function loseHp(n) {
   if (run.hp <= 0) { run.hp = 0; playerDied(); }
 }
 
-function playCard(inst, target) {
+function playCard(inst, target, opt) {
   if (cb.busy || cb.over) return;
-  const c = cardData(inst);
+  let c = cardData(inst);
   if (c.cost > cb.energy) return;
+  // choice cards (Transmute): pick an effect set first; nothing is spent on cancel
+  if (c.choice && !opt) {
+    showChoice(c, o => {
+      if (o) playCard(inst, target, o);
+      else { cb.selected = null; logLine(`Turn ${cb.turn} — your move.`); updateCombatUI(); }
+    });
+    return;
+  }
+  if (opt) {
+    c = Object.assign({}, c);
+    for (const [k, from] of Object.entries(opt.fx)) c[k] = c[from];
+  }
   cb.energy -= c.cost;
   run.stats.cardsPlayed++;
   cb.hand.splice(cb.hand.indexOf(inst), 1);
-  (c.exhaust ? cb.exhausted : cb.discard).push(inst);
+  // powers stay in effect, so they leave the deck for the rest of the fight
+  (c.exhaust || c.type === 'pow' ? cb.exhausted : cb.discard).push(inst);
 
   if (c.selfDmg) loseHp(c.selfDmg);
   if (cb.over) return;
 
+  const pEl = $('player-unit');
   const targets = c.aoe ? cb.enemies.filter(e => e.alive) : (target ? [target] : []);
+  let dealt = 0;
   if (c.dmg) {
     const hits = c.hits || 1;
-    for (let i = 0; i < hits; i++) for (const t of targets) { if (t.alive) hitEnemy(t, c.dmg); }
+    for (let i = 0; i < hits; i++) for (const t of targets) {
+      if (!t.alive) continue;
+      const cursed = c.cursedBonus && (t.weak > 0 || t.vuln > 0);
+      dealt += hitEnemy(t, cursed ? c.dmg * 2 : c.dmg);
+    }
   }
   for (const t of targets) {
-    if (!t.alive && !c.dmg) continue;
+    if (!t.alive) continue;
     if (c.poison) { t.poison += c.poison; }
     if (c.weak) { t.weak += c.weak; }
     if (c.vuln) { t.vuln += c.vuln; }
+    if (c.strDown) { t.str -= c.strDown; }
+    if (c.constrict) { t.constrict += c.constrict; }
+    if (c.seed) { t.seed += c.seed; }
+    if (c.stun) { t.stun += c.stun; floatText(cb.enemyEls[t.uid], '💫', 'blockf'); }
   }
-  if (c.block) { cb.pBlock += c.block; run.stats.blockGained += c.block; floatText($('player-unit'), '+' + c.block + '🛡️', 'blockf'); sfx('block'); }
-  if (c.heal) { const r = healPlayer(c.heal); if (r > 0) { floatText($('player-unit'), '+' + r + '❤️', 'healf'); sfx('heal'); } }
-  if (c.str) { cb.pStr += c.str; floatText($('player-unit'), '+' + c.str + '💪', 'healf'); }
+  if (c.lifesteal && dealt > 0) { const r = healPlayer(dealt); if (r > 0) { floatText(pEl, '+' + r + '❤️', 'healf'); sfx('heal'); } }
+  if (c.cleanse && (cb.pWeak > 0 || cb.pVuln > 0)) { cb.pWeak = 0; cb.pVuln = 0; floatText(pEl, '✨', 'healf'); }
+  if (c.block) {
+    const b = Math.max(0, c.block + cb.pDex);
+    cb.pBlock += b; run.stats.blockGained += b;
+    floatText(pEl, '+' + b + '🛡️', 'blockf'); sfx('block');
+  }
+  if (c.heal) { const r = healPlayer(c.heal); if (r > 0) { floatText(pEl, '+' + r + '❤️', 'healf'); sfx('heal'); } }
+  if (c.str) { cb.pStr += c.str; floatText(pEl, '+' + c.str + '💪', 'healf'); }
+  if (c.dex) { cb.pDex += c.dex; floatText(pEl, '+' + c.dex + '💨', 'healf'); }
   if (c.energy) cb.energy += c.energy;
+  if (c.energyPerTurn) cb.energyPerTurn += c.energyPerTurn;
   if (c.draw) drawCards(c.draw);
   if (c.gold) { gainGold(c.gold); sfx('gold'); toast('+' + c.gold + ' 🪙'); }
+  if (c.potion) { for (let i = 0; i < c.potion; i++) gainPotion(randomPotion()); }
+  if (c.bullets) addToHand('bullet', c.bullets);
+  if (c.type === 'atk' && !c.token && hasRelic('ammobelt')) {
+    cb.attackCount++;
+    if (cb.attackCount % TUNING.ammoEvery === 0) {
+      addToHand('bullet', TUNING.ammoBullets);
+      floatText(pEl, '+' + TUNING.ammoBullets + '🔫', 'blockf');
+    }
+  }
 
   cb.selected = null;
   updateCombatUI();
   checkCombatEnd();
+}
+
+/* ---------- choice popup (Transmute) ---------- */
+function showChoice(c, done) {
+  const ov = $('choice-overlay');
+  const fill = s => s.replace(/\{(\w+)\}/g, (_, k) => c[k]);
+  ov.innerHTML = `<div class="panel"><h2>${c.name}${c.upgraded ? '+' : ''}</h2>` +
+    c.choice.map((o, i) => `<button class="btn" data-opt="${i}">${o.label}<br><small>${fill(o.text)}</small></button>`).join('') +
+    `<button class="btn danger" data-opt="-1">CANCEL</button></div>`;
+  ov.classList.add('show');
+  ov.querySelectorAll('[data-opt]').forEach(b => {
+    b.onclick = () => {
+      sfx('click');
+      ov.classList.remove('show');
+      const i = +b.dataset.opt;
+      done(i >= 0 ? c.choice[i] : null);
+    };
+  });
+}
+
+/* ---------- Cherry Blossom: flee a non-boss fight ---------- */
+function canEscape() {
+  return !!cb && hasRelic('cherryblossom') && !cb.isBoss && !cb.escapeUsed && !cb.over;
+}
+function tryEscape() {
+  if (cb.busy || !canEscape()) return;
+  cb.escapeUsed = true;
+  if (Math.random() < TUNING.escapeChance) {
+    cb.over = true; cb.busy = true;
+    sfx('win'); toast('🌸 You vanish in a swirl of petals!');
+    setTimeout(backToMap, 600);
+  } else {
+    sfx('block'); toast('🌸 The petals scatter — no escape!');
+    logLine('Escape failed! Fight on.');
+    updateCombatUI();
+  }
 }
 
 function checkCombatEnd() {
@@ -699,21 +833,7 @@ function endTurn() {
   if (cb.busy || cb.over) return;
   cb.busy = true;
   cb.selected = null;
-  // poison ticks on enemies
-  for (const e of cb.enemies) {
-    if (e.alive && e.poison > 0) {
-      e.hp -= e.poison;
-      run.stats.dmgDealt += e.poison;
-      floatText(cb.enemyEls[e.uid], '-' + e.poison + '☠', 'healf');
-      e.poison--;
-      if (e.hp <= 0) {
-        e.alive = false; e.hp = 0;
-        run.stats.enemiesSlain++;
-        if (e.def.boss) run.stats.bossesSlain++;
-        sfx('death');
-      }
-    }
-  }
+  tickEnemyStatuses();
   updateCombatUI();
   if (checkCombatEnd()) return;
   // discard hand
@@ -729,6 +849,7 @@ function endTurn() {
       // end of round: tick down debuffs
       if (cb.pWeak > 0) cb.pWeak--;
       if (cb.pVuln > 0) cb.pVuln--;
+      if (cb.pFly > 0) cb.pFly--;
       for (const e of cb.enemies) { if (e.weak > 0) e.weak--; if (e.vuln > 0) e.vuln--; }
       startPlayerTurn();
       return;
@@ -742,16 +863,55 @@ function endTurn() {
   setTimeout(step, 420);
 }
 
+// end of the player's turn: poison, constrict and leech seed hit every enemy
+function tickEnemyStatuses() {
+  let drained = 0;
+  for (const e of cb.enemies) {
+    if (!e.alive) continue;
+    const parts = [];
+    if (e.poison > 0) {
+      enemyLoseHp(e, e.poison);
+      parts.push('-' + e.poison + '☠');
+      e.poison--;
+    }
+    if (e.alive && e.constrict > 0) {
+      enemyLoseHp(e, TUNING.constrictDmg);
+      parts.push('-' + TUNING.constrictDmg + '⛓️');
+      e.constrict--;
+      if (e.alive && Math.random() < TUNING.constrictStunChance) { e.stun = Math.max(e.stun, 1); parts.push('💫'); }
+    }
+    if (e.alive && e.seed > 0) {
+      const r = enemyLoseHp(e, TUNING.leechSeedDrain);
+      drained += r;
+      parts.push('-' + r + '🌱');
+      e.seed--;
+    }
+    if (parts.length) floatText(cb.enemyEls[e.uid], parts.join(' '), 'healf');
+  }
+  if (drained > 0) {
+    const h = healPlayer(drained);
+    if (h > 0) floatText($('player-unit'), '+' + h + '❤️', 'healf');
+  }
+}
+
 function enemyAct(e) {
   const m = e.intent;
   e.block = 0; // enemy block resets when it acts
   const pEl = $('player-unit');
+  if (e.stun > 0) {
+    e.stun--;
+    floatText(cb.enemyEls[e.uid], '💫', 'blockf');
+    logLine(`${e.def.name} is stunned and loses its turn!`);
+    rollIntent(e);
+    return;
+  }
   if (m.dmg) {
     const hits = m.hits || 1;
     for (let h = 0; h < hits; h++) {
-      let amt = m.dmg + e.str;
+      let amt = Math.max(0, m.dmg + e.str);
       if (e.weak > 0) amt = Math.floor(amt * 0.75);
       if (cb.pVuln > 0) amt = Math.floor(amt * 1.5);
+      if (cb.pFly > 0) amt = Math.floor(amt * (1 - TUNING.flyDamageCut));
       const blocked = Math.min(cb.pBlock, amt);
       cb.pBlock -= blocked;
       const hpLoss = amt - blocked;
@@ -827,12 +987,12 @@ function openBossReward() {
         case 'maxhp': run.maxHp += 10; run.hp += 10; toast('+10 Max HP!'); backToMap(); break;
         case 'potions': gainPotion(randomPotion()); gainPotion(randomPotion()); backToMap(); break;
         case 'relic': {
-          const unowned = Object.keys(RELICS).filter(k => !hasRelic(k));
+          const unowned = unownedRelics();
           if (unowned.length) grantRelic(pick(unowned)); else { gainGold(50); toast('+50 🪙 (all relics owned)'); }
           backToMap(); break;
         }
         case 'rare': {
-          const rares = Object.keys(CARDS).filter(k => CARDS[k].rar === 2 && ['any', run.charId, run.companion && run.companion.id].includes(CARDS[k].cls));
+          const rares = rewardPool().filter(k => CARDS[k].rar === 2);
           const choices = shuffle(rares).slice(0, 3).map(k => ({ key: k, up: false, uid: Math.random() }));
           pickCardScreen('CHOOSE A RARE CARD', choices, { skippable: true }, (inst) => {
             if (inst) { run.deck.push(inst); run.stats.cardsAdded++; toast(`Added ${cardData(inst).name}!`); }
@@ -857,7 +1017,9 @@ function openBossReward() {
 function rewardPool() {
   const classes = ['any', run.charId];
   if (run.companion) classes.push(run.companion.id);
-  return Object.keys(CARDS).filter(k => classes.includes(CARDS[k].cls) && !['strike','defend'].includes(k));
+  // signature (unique) cards and generated tokens (Bullets) are never offered
+  return Object.keys(CARDS).filter(k => classes.includes(CARDS[k].cls) && !CARDS[k].unique && !CARDS[k].token
+    && !['strike','defend'].includes(k));
 }
 
 function rollRewardCards(n) {
@@ -934,7 +1096,7 @@ function backToMap() { renderMap(); showScreen('screen-map'); }
 /* ---- chest ---- */
 function openChest() {
   const gold = randInt(25, 50) + run.act * 10;
-  const unowned = Object.keys(RELICS).filter(k => !hasRelic(k));
+  const unowned = unownedRelics();
   eventPanel(`
     <div class="evt-title">A Forgotten Chest</div>
     ${evtSprite('chest')}
@@ -995,26 +1157,50 @@ function openRest() {
 function openMerchant() {
   const stock = rollRewardCards(3);
   const priceOf = inst => [45, 65, 90][CARDS[inst.key].rar] || 45;
-  const healCost = 40, removeCost = 55, potCost = 30;
-  let potStock = randomPotion();
+  const healCost = 40, potCost = 30, relicCost = 90;
+  // one purge per visit; every purge this run makes the next one cost 25 more
+  const removeCost = 55 + 25 * (run.purgeCount || 0);
+  let purged = false;
+  const potStock = shuffle(Object.keys(POTIONS)).slice(0, 3);   // 3 different potions
+  const relicStock = shuffle(unownedRelics()).slice(0, 3);      // up to 3 different relics
+  const sold = new Set();
+  const shopItem = (id, icon, name, desc, cost) => sold.has(id)
+    ? `<button class="btn" disabled><span class="si-icon">${icon}</span>SOLD</button>`
+    : `<button class="btn" id="${id}"><span class="si-icon">${icon}</span>${name}<small>${desc}</small><span class="si-price">🪙${cost}</span></button>`;
   const render = () => {
     eventPanel(`
       <div class="evt-title">The Merchant</div>
       ${evtSprite('merchant')}
       <div class="evt-body">"Brave or stupid, your coin spends the same. <b>🪙${run.gold}</b>"</div>
       <button class="btn" id="m-cards">🃏 BROWSE CARDS (${stock.length})</button>
-      ${potStock ? `<button class="btn" id="m-potion">${POTIONS[potStock].icon} ${POTIONS[potStock].name.toUpperCase()} (🪙${potCost})<br><small>${POTIONS[potStock].desc}</small></button>` : ''}
+      <div class="shop-label">POTIONS</div>
+      <div class="shop-row">${potStock.map((k, i) => shopItem(`m-pot-${i}`, POTIONS[k].icon, POTIONS[k].name, POTIONS[k].desc, potCost)).join('')}</div>
+      <div class="shop-label">RELICS</div>
+      <div class="shop-row">${relicStock.length
+        ? relicStock.map((k, i) => shopItem(`m-relic-${i}`, RELICS[k].icon, RELICS[k].name, RELICS[k].desc, relicCost)).join('')
+        : '<div class="shop-empty">"You\'ve bought me out of trinkets."</div>'}</div>
       <button class="btn" id="m-heal">❤️ MEND WOUNDS — heal 25 (🪙${healCost})</button>
-      <button class="btn" id="m-remove">🗑️ PURGE A CARD (🪙${removeCost})</button>
+      <button class="btn" id="m-remove" ${purged ? 'disabled' : ''}>${purged ? '🗑️ PURGED — one per visit' : `🗑️ PURGE A CARD (🪙${removeCost})`}</button>
       <button class="btn big" id="m-leave">LEAVE</button>
     `);
     drawEvtSprite('merchant');
-    if (potStock) $('m-potion').onclick = () => {
-      if (run.gold < potCost) { toast('Not enough gold!'); return; }
-      if (run.potions.length >= MAX_POTIONS) { toast('Potion belt is full!'); return; }
-      run.gold -= potCost; run.stats.goldSpent += potCost;
-      gainPotion(potStock); potStock = null; sfx('gold'); render();
-    };
+    potStock.forEach((k, i) => {
+      const b = $(`m-pot-${i}`);
+      if (b) b.onclick = () => {
+        if (run.gold < potCost) { toast('Not enough gold!'); return; }
+        if (run.potions.length >= MAX_POTIONS) { toast('Potion belt is full!'); return; }
+        run.gold -= potCost; run.stats.goldSpent += potCost;
+        gainPotion(k); sold.add(b.id); sfx('gold'); render();
+      };
+    });
+    relicStock.forEach((k, i) => {
+      const b = $(`m-relic-${i}`);
+      if (b) b.onclick = () => {
+        if (run.gold < relicCost) { toast('Not enough gold!'); return; }
+        run.gold -= relicCost; run.stats.goldSpent += relicCost;
+        grantRelic(k); sold.add(b.id); render();
+      };
+    });
     $('m-cards').onclick = () => {
       if (!stock.length) { toast('Sold out!'); return; }
       pickCardScreen('BUY A CARD', stock, { skippable: true, skipLabel: 'BACK', priceOf }, (inst) => {
@@ -1036,11 +1222,14 @@ function openMerchant() {
       healPlayer(25); sfx('heal'); toast('+25 HP'); render();
     };
     $('m-remove').onclick = () => {
+      if (purged) return;
       if (run.gold < removeCost) { toast('Not enough gold!'); return; }
       if (run.deck.length <= 5) { toast('Your deck is too thin!'); return; }
       pickCardScreen('REMOVE A CARD', run.deck, { skippable: true, skipLabel: 'BACK' }, (inst) => {
         if (inst) {
           run.gold -= removeCost; run.stats.goldSpent += removeCost;
+          run.purgeCount = (run.purgeCount || 0) + 1;
+          purged = true;
           run.deck.splice(run.deck.indexOf(inst), 1);
           sfx('click'); toast(`Removed ${CARDS[inst.key].name}.`);
         }
@@ -1173,7 +1362,7 @@ function fountainEvent() {
 }
 
 function peddlerEvent() {
-  const unowned = Object.keys(RELICS).filter(k => !hasRelic(k));
+  const unowned = unownedRelics();
   if (!unowned.length) return fountainEvent();
   const r = pick(unowned), cost = 45;
   eventPanel(`
@@ -1232,7 +1421,7 @@ function drawCutsceneArt(key) {
   // hero sprite (or skull on defeat)
   const tmp = document.createElement('canvas');
   tmp.width = 48; tmp.height = 48;
-  const sprId = key === 'defeat' ? 'skull' : (run ? run.char.sprite : 'knight');
+  const sprId = key === 'defeat' ? 'skull' : (run ? run.char.sprite : CHARACTERS[0].sprite);
   drawSprite(tmp, sprId);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(tmp, cv.width * 0.18, cv.height - 18 - 48, 48, 48);
@@ -1325,10 +1514,14 @@ function buildCharSelect() {
       selectedCharId = c.id;
       document.querySelectorAll('.char-card').forEach(x => x.classList.remove('selected'));
       d.classList.add('selected');
+      const relic = RELICS[c.relic];
+      const sigKey = c.starterCards.find(k => CARDS[k].unique);
       $('char-detail').innerHTML = `
         <h2>${c.name} — ${c.role}</h2>
         <p>${c.desc}</p>
         <div class="stat-line">❤️ ${c.maxHp} Max HP &nbsp;·&nbsp; 🃏 ${c.starterCards.length} starting cards</div>
+        ${relic ? `<div class="stat-line">${relic.icon} <b>${relic.name}</b> — ${relic.desc}</div>` : ''}
+        ${sigKey ? `<div class="stat-line">🃏 <b>${CARDS[sigKey].name}</b> — ${cardDesc(CARDS[sigKey])}</div>` : ''}
         <div class="stat-line sig">${c.companionText}</div>`;
       $('btn-embark').disabled = false;
     };
@@ -1370,6 +1563,7 @@ function init() {
   $('btn-select-back').onclick = () => { sfx('click'); showScreen('screen-menu'); };
   $('btn-embark').onclick = () => { if (selectedCharId) { sfx('win'); startRun(selectedCharId); } };
   $('btn-end-turn').onclick = () => { sfx('click'); endTurn(); };
+  $('btn-escape').onclick = () => { sfx('click'); tryEscape(); };
   $('btn-cutscene-next').onclick = () => { sfx('click'); advanceCutscene(); };
   $('cutscene-text').onclick = () => advanceCutscene();
   $('btn-again').onclick = () => { sfx('click'); buildCharSelect(); showScreen('screen-select'); };

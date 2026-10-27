@@ -22,8 +22,21 @@ To use real images instead: replace `drawSprite(canvas, id)` with your own funct
   side-scroller, or Coin Squall — catch coins dodge skulls), or story events.
 - **Potions**: carry up to 3, tap them in the top bar (most are combat-only). Drops from
   fights/chests, sold by merchants.
-- Combat: 3 energy, draw 5, enemies telegraph intents. Poison / Weak / Vulnerable / Strength.
+- **Merchant** 🛒: 3 cards, 3 different potions, 3 different relics, healing, and one card
+  purge per visit (55 gold, +25 every time you purge).
+- Combat: 3 energy, draw 5, enemies telegraph intents. Poison / Weak / Vulnerable / Strength /
+  Dexterity / Stun / Constrict / Leech Seed / Fly.
 - Die or beat the Crimson God → short cutscene → score + full run stats.
+
+## Heroes
+Each hero starts with a unique relic; signature cards are starter-deck only.
+| Hero | Plays like | Signature card | Starting relic |
+|---|---|---|---|
+| Vesna, the Alchemist | brews potions, buffs & debuffs | **Transmute**: choose +2 Str & +2 Dex, or 2 Weak & 2 Vulnerable | **Empty Bottle**: brew 1 potion every combat |
+| Calloway, the Gunslinger | Reload cards add 0-cost **Bullets** (2 dmg + 1 Vulnerable); chain whip stuns & constricts | — | **Ammo Belt**: every 3rd attack (not Bullets) adds 2 Bullets |
+| Akane, the Ninja | poison & stuns | **Smoke Screen**: 2 Weak, -2 Str, gain 2 Dex | **Cherry Blossom**: once per non-boss fight, 50% chance to flee |
+| Thistle, the Faunus | leech & energy | **Leech Seed**: drain 2 HP for 3 turns | **Butterfly Wings**: 3 turns of Fly (50% less damage) each combat |
+| Sister Elara, the Exorcist | heals & curses | **Purify**: remove your Weak & Vulnerable | **Holy Cross**: 3 Dexterity each combat |
 
 ## Saving
 One save slot in localStorage, written automatically every time you're on the map.
@@ -37,7 +50,8 @@ loop, MIDI note numbers, 0 = rest. Change `bpm`/`vol` or rewrite the patterns fr
 The 🔊 button (top-right) mutes everything.
 
 ## Tuning knobs (data.js)
-- Hero HP / starter decks → `CHARACTERS`
+- Hero HP / starter decks / starting relic → `CHARACTERS`
+- Constrict, Leech Seed, Fly and starting-relic numbers → `TUNING`
 - Card numbers & upgrades → `CARDS` (the `up:{}` object is the upgraded version)
 - Enemy HP / move patterns → `ENEMIES`, encounter mixes → `ENCOUNTERS`
 - Relic effects → `RELICS`, potions → `POTIONS`, boss-kill rewards → `BOSS_REWARDS`

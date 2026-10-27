@@ -11,72 +11,72 @@
 
 const SPRITES = {
   /* ------------- HEROES (12x12) ------------- */
-  knight: {
-    pal: { s:'#c9ccd4', d:'#7d8291', f:'#e8b88a', b:'#3d4a5c', r:'#b03a3a', k:'#22242c', g:'#d8b45a' },
+  alchemist: {
+    pal: { b:'#6b4a2a', d:'#4a3220', f:'#e8c9a0', g:'#d8b45a', k:'#22242c', v:'#6bc96b', w:'#c9e8f2' },
     map: [
-      "....ssss....",
-      "...sskkss...",
-      "...sffffs...",
-      "...sffffs...",
-      "..ssssssss..",
-      ".ssssggssss.",
-      ".s.ssssss.r.",
-      "...ssssss.r.",
-      "...ss..ss.r.",
-      "...ss..ss...",
-      "...kk..kk...",
-      "..kkk..kkk..",
-    ]
-  },
-  witch: {
-    pal: { p:'#7a4fc9', d:'#4a2f85', f:'#e8c9a0', h:'#2a1a3a', g:'#b8f26b', k:'#22242c' },
-    map: [
-      ".....pp.....",
-      "....pppp....",
-      "...pppppp...",
-      "..hhhhhhhh..",
-      "...hffffh...",
-      "...hfgfgh...",
-      "...pffffp...",
-      "..pppppppp..",
-      ".p.pppppp.p.",
-      "g..pppppp...",
-      "g...pppp....",
-      "g..pp..pp...",
-    ]
-  },
-  cultist: {
-    pal: { r:'#8a2432', d:'#5a1620', f:'#d8b0a0', k:'#151018', y:'#f2d16b' },
-    map: [
-      "....rrrr....",
-      "...rrrrrr...",
-      "...rkkkkr...",
-      "...rkykyr...",
-      "...rrkkrr...",
-      "..rrrrrrrr..",
-      ".rrrryyrrrr.",
-      ".r.rrrrrr.r.",
-      ".k.rrrrrr.k.",
-      "...rrrrrr...",
-      "...rrrrrr...",
-      "..rrr..rrr..",
-    ]
-  },
-  ranger: {
-    pal: { g:'#4f8a3d', d:'#33592a', f:'#e8c9a0', h:'#6b4a2a', k:'#22242c', w:'#c9a86b' },
-    map: [
-      "....gggg....",
-      "...gggggg...",
-      "...gffffg...",
-      "...gfkfkg...",
+      "....bbbb....",
+      "...bbbbbb...",
+      "...bffffb...",
+      "...gkggkg...",
       "....ffff....",
-      "..gggggggw..",
-      ".g.gggggg.w.",
-      ".g.gggggg.w.",
-      "...hhhhhh.w.",
-      "...hh..hh...",
-      "...hh..hh...",
+      "..bbbbbbbb..",
+      ".b.bbggbb.w.",
+      ".b.bbbbbb.v.",
+      ".f.bbbbbb.vv",
+      "...bbbbbb...",
+      "...bb..bb...",
       "..kkk..kkk..",
+    ]
+  },
+  gunslinger: {
+    pal: { h:'#5c4430', d:'#3d2d20', f:'#e8c9a0', c:'#8a6b4a', k:'#22242c', s:'#a8adb8', r:'#b03a3a' },
+    map: [
+      "....hhhh....",
+      "..hhhhhhhh..",
+      "...ffffff...",
+      "...fkffkf...",
+      "....rrrr....",
+      "..cccccccc..",
+      ".c.cccccc.ss",
+      ".c.cccccc.s.",
+      "...kkkkkk...",
+      "...cc..cc...",
+      "...dd..dd...",
+      "..kkk..kkk..",
+    ]
+  },
+  ninja: {
+    pal: { n:'#2a2a3a', d:'#1a1a24', f:'#e8c9a0', k:'#0a0a10', r:'#c92432', s:'#a8adb8' },
+    map: [
+      "..........s.",
+      "....nnnn.s..",
+      "...nnnnnsn..",
+      "...nfkfkfn..",
+      "...nnnnnnn..",
+      "..rrnnnnnn..",
+      ".r.nnnnnn.n.",
+      "r..nnrrnn.n.",
+      "...nnnnnn...",
+      "...nn..nn...",
+      "...dd..dd...",
+      "..kkk..kkk..",
+    ]
+  },
+  fae: {
+    pal: { g:'#5fa84f', d:'#3d6b33', f:'#d8c9a0', e:'#b8f26b', k:'#22242c', w:'#e8a0d8', b:'#8a6b4a' },
+    map: [
+      ".b........b.",
+      "..b.gggg.b..",
+      "...gggggg...",
+      "...gfefeg...",
+      "....ffff....",
+      "ww.gggggg.ww",
+      "www.gggg.www",
+      "ww.gggggg.ww",
+      "...gggggg...",
+      "....g..g....",
+      "....b..b....",
+      "...bb..bb...",
     ]
   },
   priest: {
@@ -422,37 +422,38 @@ const SPRITES = {
    CHARACTERS — the 5 playable heroes.
    Any hero you DON'T pick can appear as a recruitable companion.
    companionText / companion(): what they do each turn as an ally.
+   relic: the hero's unique starting relic (see RELICS).
    ============================================================ */
 const CHARACTERS = [
   {
-    id: 'knight', name: 'Sir Aldric', role: 'The Knight', sprite: 'knight',
-    maxHp: 80, desc: 'A stalwart wall of steel. Outlasts enemies behind heavy block.',
-    companionText: 'Companion: grants you 4 Block every turn.',
-    starterCards: ['strike','strike','strike','strike','defend','defend','defend','defend','shieldbash','ironwall'],
+    id: 'alchemist', name: 'Vesna', role: 'The Alchemist', sprite: 'alchemist',
+    maxHp: 66, relic: 'emptybottle', desc: 'Brews potions mid-fight, then tips the odds with buffs and debuffs.',
+    companionText: 'Companion: hurls a vial for 4 damage and 1 Vulnerable every turn.',
+    starterCards: ['strike','strike','strike','defend','defend','defend','acidflask','acidflask','brew','transmute'],
   },
   {
-    id: 'witch', name: 'Morgana', role: 'The Witch', sprite: 'witch',
-    maxHp: 62, desc: 'A glass cannon slinging hexes and raw arcane fire.',
-    companionText: 'Companion: zaps a random enemy for 6 every turn.',
-    starterCards: ['strike','strike','strike','defend','defend','defend','firebolt','firebolt','hex','arcanestorm'],
+    id: 'gunslinger', name: 'Calloway', role: 'The Gunslinger', sprite: 'gunslinger',
+    maxHp: 70, relic: 'ammobelt', desc: 'Reloads, then empties the cylinder. A chain whip stuns and constricts.',
+    companionText: 'Companion: fires 2 shots of 3 damage every turn.',
+    starterCards: ['strike','strike','strike','defend','defend','defend','reload','reload','quickdraw','whipwrap'],
   },
   {
-    id: 'cultist', name: 'Brother Silas', role: 'The Cultist', sprite: 'cultist',
-    maxHp: 70, desc: 'Pays in blood for terrible power. High risk, high reward.',
-    companionText: 'Companion: deals 8 to a random enemy, but you lose 2 HP.',
-    starterCards: ['strike','strike','strike','defend','defend','defend','ritualdagger','ritualdagger','bloodrite','unholyward'],
-  },
-  {
-    id: 'ranger', name: 'Wren', role: 'The Ranger', sprite: 'ranger',
-    maxHp: 66, desc: 'Death by a thousand cuts. Poison stacks win long fights.',
+    id: 'ninja', name: 'Akane', role: 'The Ninja', sprite: 'ninja',
+    maxHp: 62, relic: 'cherryblossom', desc: 'Strikes from the smoke. Poison wears foes down while stuns buy time.',
     companionText: 'Companion: applies 3 Poison to a random enemy every turn.',
-    starterCards: ['strike','strike','strike','defend','defend','defend','poisonarrow','poisonarrow','twinshot','nimble'],
+    starterCards: ['strike','strike','strike','defend','defend','defend','venomshuriken','venomshuriken','shadowstep','smokescreen'],
   },
   {
-    id: 'priest', name: 'Sister Elara', role: 'The Priest', sprite: 'priest',
-    maxHp: 72, desc: 'Smites the wicked and mends wounds. Slow but unkillable.',
+    id: 'fae', name: 'Thistle', role: 'The Faunus', sprite: 'fae',
+    maxHp: 64, relic: 'butterflywings', desc: 'A fae forest spirit that leeches life from its foes and overflows with energy.',
+    companionText: 'Companion: drains 3 HP from a random enemy and heals you every turn.',
+    starterCards: ['strike','strike','strike','defend','defend','defend','siphon','siphon','dewdrop','leechseed'],
+  },
+  {
+    id: 'priest', name: 'Sister Elara', role: 'The Exorcist', sprite: 'priest',
+    maxHp: 72, relic: 'holycross', desc: 'Mends wounds and lays curses on the wicked. Slow, but hard to kill.',
     companionText: 'Companion: heals you for 4 every turn.',
-    starterCards: ['strike','strike','strike','defend','defend','defend','smite','smite','holyshield','blessedlight'],
+    starterCards: ['strike','strike','strike','defend','defend','defend','smite','smite','curseoffrailty','purify'],
   },
 ];
 
@@ -460,7 +461,17 @@ const CHARACTERS = [
    CARDS
    type: atk / skl / pow.  cls: which hero's pool ('any' = neutral)
    Effect keys: dmg, hits, aoe, block, heal, selfDmg, draw, energy,
-   poison, weak, vuln, str, gold, exhaust
+   poison, weak, vuln, str, gold, exhaust,
+   dex (gain Dexterity), strDown (enemy loses Strength),
+   stun (enemy skips its next move), constrict (turns of Constrict),
+   seed (turns of Leech Seed), lifesteal (heal the HP damage dealt),
+   cleanse (remove your Weak/Vulnerable), potion (brew N random potions),
+   bullets (add N Bullet cards to hand), energyPerTurn (power: +energy
+   every turn), cursedBonus (double damage vs. Weak/Vulnerable foes),
+   choice (pick one of several effect sets when played)
+   unique: a hero's signature card — starter deck only, never offered.
+   token: generated mid-combat (Bullets) — never offered.
+   Powers (pow) stay in effect for the rest of the fight once played.
    up: overrides applied when upgraded (name gets a +)
    ============================================================ */
 const CARDS = {
@@ -471,36 +482,76 @@ const CARDS = {
   bandage:     { name:'Bandage', type:'skl', cost:1, cls:'any', rar:1, heal:5, exhaust:true, up:{heal:9}, desc:'Heal {heal}. Exhaust.' },
   adrenaline:  { name:'Adrenaline', type:'skl', cost:0, cls:'any', rar:2, draw:2, exhaust:true, up:{draw:3}, desc:'Draw {draw} cards. Exhaust.' },
   luckycoin:   { name:'Lucky Coin', type:'skl', cost:1, cls:'any', rar:2, gold:15, exhaust:true, up:{gold:25}, desc:'Gain {gold} gold. Exhaust.' },
-  /* knight */
-  shieldbash:  { name:'Shield Bash', type:'atk', cost:1, cls:'knight', rar:1, dmg:8, block:3, up:{dmg:11,block:5}, desc:'Deal {dmg} damage. Gain {block} Block.' },
-  ironwall:    { name:'Iron Wall', type:'skl', cost:1, cls:'knight', rar:0, block:9, up:{block:13}, desc:'Gain {block} Block.' },
-  crushingblow:{ name:'Crushing Blow', type:'atk', cost:2, cls:'knight', rar:1, dmg:14, vuln:2, up:{dmg:18,vuln:3}, desc:'Deal {dmg} damage. Apply {vuln} Vulnerable.' },
-  rallyingcry: { name:'Rallying Cry', type:'pow', cost:1, cls:'knight', rar:2, str:2, up:{str:3}, desc:'Gain {str} Strength.' },
-  bulwark:     { name:'Bulwark', type:'skl', cost:2, cls:'knight', rar:2, block:14, draw:1, up:{block:20,draw:1}, desc:'Gain {block} Block. Draw {draw} card.' },
-  /* witch */
-  firebolt:    { name:'Fire Bolt', type:'atk', cost:1, cls:'witch', rar:0, dmg:9, up:{dmg:13}, desc:'Deal {dmg} damage.' },
-  hex:         { name:'Hex', type:'skl', cost:1, cls:'witch', rar:1, weak:2, vuln:2, up:{weak:3,vuln:3}, desc:'Apply {weak} Weak and {vuln} Vulnerable.' },
-  arcanestorm: { name:'Arcane Storm', type:'atk', cost:2, cls:'witch', rar:1, dmg:8, aoe:true, up:{dmg:12}, desc:'Deal {dmg} damage to ALL enemies.' },
-  manasurge:   { name:'Mana Surge', type:'skl', cost:1, cls:'witch', rar:2, energy:1, draw:2, exhaust:true, up:{energy:2,draw:2}, desc:'Gain {energy} Energy. Draw {draw}. Exhaust.' },
-  soulflame:   { name:'Soul Flame', type:'atk', cost:3, cls:'witch', rar:2, dmg:24, up:{dmg:32}, desc:'Deal {dmg} damage.' },
-  /* cultist */
-  ritualdagger:{ name:'Ritual Dagger', type:'atk', cost:1, cls:'cultist', rar:0, dmg:7, heal:2, up:{dmg:10,heal:3}, desc:'Deal {dmg} damage. Heal {heal}.' },
-  bloodrite:   { name:'Blood Rite', type:'atk', cost:0, cls:'cultist', rar:1, dmg:10, selfDmg:3, up:{dmg:14,selfDmg:3}, desc:'Lose {selfDmg} HP. Deal {dmg} damage.' },
-  darkpact:    { name:'Dark Pact', type:'skl', cost:1, cls:'cultist', rar:2, selfDmg:4, energy:2, draw:2, exhaust:true, up:{selfDmg:3,energy:2,draw:3}, desc:'Lose {selfDmg} HP. Gain {energy} Energy, draw {draw}. Exhaust.' },
-  sacrifice:   { name:'Sacrifice', type:'atk', cost:2, cls:'cultist', rar:2, dmg:22, selfDmg:6, up:{dmg:30,selfDmg:6}, desc:'Lose {selfDmg} HP. Deal {dmg} damage.' },
-  unholyward:  { name:'Unholy Ward', type:'skl', cost:1, cls:'cultist', rar:0, block:6, heal:2, up:{block:9,heal:3}, desc:'Gain {block} Block. Heal {heal}.' },
-  /* ranger */
-  poisonarrow: { name:'Poison Arrow', type:'atk', cost:1, cls:'ranger', rar:0, dmg:5, poison:4, up:{dmg:7,poison:6}, desc:'Deal {dmg} damage. Apply {poison} Poison.' },
-  twinshot:    { name:'Twin Shot', type:'atk', cost:1, cls:'ranger', rar:0, dmg:4, hits:2, up:{dmg:6}, desc:'Deal {dmg} damage twice.' },
-  toxincloud:  { name:'Toxin Cloud', type:'skl', cost:2, cls:'ranger', rar:1, poison:5, aoe:true, up:{poison:8}, desc:'Apply {poison} Poison to ALL enemies.' },
-  nimble:      { name:'Nimble', type:'skl', cost:1, cls:'ranger', rar:0, block:6, draw:1, up:{block:9,draw:1}, desc:'Gain {block} Block. Draw {draw} card.' },
-  rainofarrows:{ name:'Rain of Arrows', type:'atk', cost:2, cls:'ranger', rar:2, dmg:5, hits:3, up:{dmg:7}, desc:'Deal {dmg} damage 3 times.' },
-  /* priest */
+  /* alchemist — potions, buffs, debuffs */
+  transmute:   { name:'Transmute', type:'skl', cost:1, cls:'alchemist', rar:1, unique:true, exhaust:true, buff:2, debuff:2,
+                 choice:[
+                   { label:'🧪 ELIXIR', text:'Gain {buff} Strength and {buff} Dexterity.', fx:{ str:'buff', dex:'buff' } },
+                   { label:'☣️ TOXIN',  text:'Apply {debuff} Weak and {debuff} Vulnerable.', fx:{ weak:'debuff', vuln:'debuff' } },
+                 ],
+                 up:{buff:3, debuff:3}, desc:'Choose: +{buff} Str & +{buff} Dex, OR {debuff} Weak & {debuff} Vuln. Exhaust.' },
+  brew:        { name:'Brew', type:'skl', cost:1, cls:'alchemist', rar:0, potion:1, draw:1, exhaust:true, up:{cost:0}, desc:'Brew a random potion. Draw {draw}. Exhaust.' },
+  acidflask:   { name:'Acid Flask', type:'atk', cost:1, cls:'alchemist', rar:0, dmg:5, vuln:2, up:{dmg:7,vuln:3}, desc:'Deal {dmg} damage. Apply {vuln} Vulnerable.' },
+  volatilemix: { name:'Volatile Mix', type:'atk', cost:2, cls:'alchemist', rar:1, dmg:8, weak:1, aoe:true, up:{dmg:11,weak:2}, desc:'Deal {dmg} damage and {weak} Weak to ALL enemies.' },
+  ironskin:    { name:'Ironskin Tonic', type:'pow', cost:1, cls:'alchemist', rar:1, dex:2, up:{dex:3}, desc:'Gain {dex} Dexterity.' },
+  liquidcourage:{ name:'Liquid Courage', type:'pow', cost:1, cls:'alchemist', rar:1, str:2, up:{str:3}, desc:'Gain {str} Strength.' },
+  mastery:     { name:'Elixir of Mastery', type:'pow', cost:2, cls:'alchemist', rar:2, str:2, dex:2, up:{cost:1}, desc:'Gain {str} Strength and {dex} Dexterity.' },
+  grandbrew:   { name:'Grand Brew', type:'skl', cost:2, cls:'alchemist', rar:2, potion:2, exhaust:true, up:{cost:1}, desc:'Brew {potion} random potions. Exhaust.' },
+  /* gunslinger — bullets & the chain whip */
+  bullet:      { name:'Bullet', type:'atk', cost:0, cls:'gunslinger', rar:0, token:true, dmg:2, vuln:1, exhaust:true, desc:'Deal {dmg} damage. Apply {vuln} Vulnerable. Exhaust.' },
+  reload:      { name:'Reload', type:'skl', cost:1, cls:'gunslinger', rar:0, bullets:3, up:{bullets:4}, desc:'Add {bullets} Bullets to your hand.' },
+  quickdraw:   { name:'Quick Draw', type:'atk', cost:1, cls:'gunslinger', rar:0, dmg:6, bullets:1, up:{dmg:9}, desc:'Deal {dmg} damage. Add {bullets} Bullet to your hand.' },
+  dodgeroll:   { name:'Dodge Roll', type:'skl', cost:1, cls:'gunslinger', rar:0, block:6, bullets:1, up:{block:9}, desc:'Gain {block} Block. Add {bullets} Bullet to your hand.' },
+  whipwrap:    { name:'Whip Wrap', type:'atk', cost:1, cls:'gunslinger', rar:0, dmg:3, constrict:3, up:{dmg:5,constrict:4}, desc:'Deal {dmg} damage. Constrict for {constrict} turns.' },
+  chainlash:   { name:'Chain Lash', type:'atk', cost:2, cls:'gunslinger', rar:1, dmg:8, stun:1, exhaust:true, up:{dmg:12}, desc:'Deal {dmg} damage. Stun the enemy. Exhaust.' },
+  steadyaim:   { name:'Steady Aim', type:'pow', cost:1, cls:'gunslinger', rar:1, str:2, up:{str:3}, desc:'Gain {str} Strength.' },
+  hogtie:      { name:'Hogtie', type:'skl', cost:2, cls:'gunslinger', rar:2, constrict:3, aoe:true, up:{constrict:5}, desc:'Constrict ALL enemies for {constrict} turns.' },
+  fanthehammer:{ name:'Fan the Hammer', type:'skl', cost:1, cls:'gunslinger', rar:2, bullets:5, exhaust:true, up:{bullets:7}, desc:'Add {bullets} Bullets to your hand. Exhaust.' },
+  /* ninja — poison & stuns */
+  smokescreen: { name:'Smoke Screen', type:'skl', cost:1, cls:'ninja', rar:1, unique:true, weak:2, strDown:2, dex:2, exhaust:true, up:{weak:3,strDown:3}, desc:'Apply {weak} Weak & -{strDown} Str. Gain {dex} Dex. Exhaust.' },
+  venomshuriken:{ name:'Venom Shuriken', type:'atk', cost:1, cls:'ninja', rar:0, dmg:4, poison:3, up:{dmg:6,poison:5}, desc:'Deal {dmg} damage. Apply {poison} Poison.' },
+  twinkunai:   { name:'Twin Kunai', type:'atk', cost:1, cls:'ninja', rar:0, dmg:4, hits:2, up:{dmg:6}, desc:'Deal {dmg} damage twice.' },
+  shadowstep:  { name:'Shadow Step', type:'skl', cost:1, cls:'ninja', rar:0, block:6, draw:1, up:{block:9}, desc:'Gain {block} Block. Draw {draw} card.' },
+  nervestrike: { name:'Nerve Strike', type:'atk', cost:1, cls:'ninja', rar:1, dmg:3, stun:1, exhaust:true, up:{dmg:7}, desc:'Deal {dmg} damage. Stun the enemy. Exhaust.' },
+  venomcloud:  { name:'Venom Cloud', type:'skl', cost:2, cls:'ninja', rar:1, poison:5, aoe:true, up:{poison:8}, desc:'Apply {poison} Poison to ALL enemies.' },
+  hemlock:     { name:'Hemlock', type:'skl', cost:1, cls:'ninja', rar:2, poison:10, exhaust:true, up:{poison:14}, desc:'Apply {poison} Poison. Exhaust.' },
+  thousandcuts:{ name:'Thousand Cuts', type:'atk', cost:2, cls:'ninja', rar:2, dmg:3, hits:5, up:{dmg:4}, desc:'Deal {dmg} damage 5 times.' },
+  /* faunus / fae — leech & energy */
+  leechseed:   { name:'Leech Seed', type:'skl', cost:1, cls:'fae', rar:1, unique:true, seed:3, up:{seed:4}, desc:'Drain 2 HP from the enemy each turn for {seed} turns.' },
+  siphon:      { name:'Siphon', type:'atk', cost:1, cls:'fae', rar:0, dmg:6, heal:2, up:{dmg:9,heal:3}, desc:'Deal {dmg} damage. Heal {heal}.' },
+  barkskin:    { name:'Bark Skin', type:'skl', cost:1, cls:'fae', rar:0, block:7, up:{block:10}, desc:'Gain {block} Block.' },
+  dewdrop:     { name:'Dewdrop', type:'skl', cost:0, cls:'fae', rar:0, energy:1, exhaust:true, up:{energy:2}, desc:'Gain {energy} Energy. Exhaust.' },
+  photosynthesis:{ name:'Photosynthesis', type:'skl', cost:1, cls:'fae', rar:1, energy:2, draw:1, exhaust:true, up:{draw:2}, desc:'Gain {energy} Energy. Draw {draw}. Exhaust.' },
+  vinelash:    { name:'Vine Lash', type:'atk', cost:2, cls:'fae', rar:1, dmg:12, heal:4, up:{dmg:16,heal:5}, desc:'Deal {dmg} damage. Heal {heal}.' },
+  lifebloom:   { name:'Lifebloom', type:'atk', cost:2, cls:'fae', rar:2, dmg:7, aoe:true, lifesteal:true, exhaust:true, up:{dmg:10}, desc:'Deal {dmg} to ALL enemies. Heal the HP dealt. Exhaust.' },
+  overgrowth:  { name:'Overgrowth', type:'pow', cost:2, cls:'fae', rar:2, energyPerTurn:1, up:{cost:1}, desc:'Gain 1 extra Energy every turn.' },
+  /* priest / exorcist — healing & curses */
+  purify:      { name:'Purify', type:'skl', cost:0, cls:'priest', rar:1, unique:true, cleanse:true, draw:1, up:{draw:2}, desc:'Remove your Weak & Vulnerable. Draw {draw}.' },
   smite:       { name:'Smite', type:'atk', cost:1, cls:'priest', rar:0, dmg:8, heal:2, up:{dmg:11,heal:3}, desc:'Deal {dmg} damage. Heal {heal}.' },
   blessedlight:{ name:'Blessed Light', type:'skl', cost:1, cls:'priest', rar:1, heal:7, up:{heal:11}, desc:'Heal {heal}.' },
   holyshield:  { name:'Holy Shield', type:'skl', cost:1, cls:'priest', rar:0, block:7, up:{block:10}, desc:'Gain {block} Block.' },
+  curseoffrailty:{ name:'Curse of Frailty', type:'skl', cost:1, cls:'priest', rar:0, weak:2, strDown:1, up:{weak:3,strDown:2}, desc:'Curse: {weak} Weak and -{strDown} Strength.' },
+  markofsin:   { name:'Mark of Sin', type:'skl', cost:1, cls:'priest', rar:1, vuln:3, up:{vuln:5}, desc:'Curse: {vuln} Vulnerable.' },
   judgment:    { name:'Judgment', type:'atk', cost:2, cls:'priest', rar:1, dmg:15, weak:2, up:{dmg:20,weak:3}, desc:'Deal {dmg} damage. Apply {weak} Weak.' },
+  anathema:    { name:'Anathema', type:'skl', cost:2, cls:'priest', rar:2, weak:2, vuln:2, aoe:true, exhaust:true, up:{weak:3,vuln:3}, desc:'Curse ALL: {weak} Weak & {vuln} Vulnerable. Exhaust.' },
+  exorcism:    { name:'Exorcism', type:'atk', cost:2, cls:'priest', rar:2, dmg:10, cursedBonus:true, up:{dmg:14}, desc:'Deal {dmg} damage. Doubled vs. Weak or Vulnerable foes.' },
   divinegrace: { name:'Divine Grace', type:'skl', cost:2, cls:'priest', rar:2, heal:10, block:6, up:{heal:14,block:9}, desc:'Heal {heal}. Gain {block} Block.' },
+};
+
+/* ============================================================
+   TUNING — numbers for the hero mechanics & starting relics
+   ============================================================ */
+const TUNING = {
+  constrictDmg: 3,           // Constrict: HP lost each turn
+  constrictStunChance: 0.25, // ...and chance each turn to be stunned
+  leechSeedDrain: 2,         // Leech Seed: HP drained each turn
+  flyDamageCut: 0.5,         // Fly: share of attack damage removed
+  bottlePotions: 1,          // Empty Bottle: potions brewed per combat
+  ammoEvery: 3,              // Ammo Belt: every Nth attack (Bullets don't count)...
+  ammoBullets: 2,            // ...adds this many Bullets
+  escapeChance: 0.5,         // Cherry Blossom: chance an escape works
+  wingsFly: 3,               // Butterfly Wings: turns of Fly per combat
+  crossDex: 3,               // Holy Cross: Dexterity per combat
+  handMax: 10,               // generated cards past this go to the discard pile
 };
 
 /* ============================================================
@@ -553,15 +604,26 @@ const ACTS = [
 ];
 
 /* ============================================================
-   RELICS — passive trinkets from chests & events
+   RELICS — passive trinkets from chests, events & merchants
+   starter: a hero's unique starting relic — never found randomly.
    ============================================================ */
 const RELICS = {
+  /* hero starting relics */
+  emptybottle:   { name:'Empty Bottle',    icon:'🍶', starter:'alchemist',  desc:'Brew 1 random potion at the start of every combat.' },
+  ammobelt:      { name:'Ammo Belt',       icon:'🔫', starter:'gunslinger', desc:'Every 3rd Attack you play (not Bullets) adds 2 Bullets to your hand.' },
+  cherryblossom: { name:'Cherry Blossom',  icon:'🌸', starter:'ninja',      desc:'Once per non-boss fight, try to FLEE: 50% chance to escape (no rewards).' },
+  butterflywings:{ name:'Butterfly Wings', icon:'🦋', starter:'fae',        desc:'Start each combat with 3 Fly (take 50% less attack damage).' },
+  holycross:     { name:'Holy Cross',      icon:'✝️', starter:'priest',     desc:'Start each combat with 3 Dexterity.' },
+  /* found / bought */
   irontalisman: { name:'Iron Talisman', icon:'🛡️', desc:'+8 Max HP on pickup.' },
   emberring:    { name:'Ember Ring',    icon:'💍', desc:'Start each combat with 1 Strength.' },
+  feathercharm: { name:'Feather Charm', icon:'🪶', desc:'Start each combat with 1 Dexterity.' },
   mooncharm:    { name:'Moon Charm',    icon:'🌙', desc:'Heal 3 after every combat.' },
   thiefpurse:   { name:"Thief's Purse", icon:'💰', desc:'+15 gold after every combat.' },
   stonescale:   { name:'Stone Scale',   icon:'🪨', desc:'Start each combat with 5 Block.' },
   bloodvial:    { name:'Blood Vial',    icon:'🧪', desc:'Heal 4 at the start of every combat.' },
+  hourglass:    { name:'Hourglass',     icon:'⏳', desc:'Draw 2 extra cards on your first turn.' },
+  warhorn:      { name:'War Horn',      icon:'📯', desc:'Gain 1 extra Energy on your first turn.' },
 };
 
 /* ============================================================
@@ -648,6 +710,9 @@ const HOW_TO_PLAY = `
 <p><b>COMPANIONS:</b> Mystery nodes may let you recruit one of the other heroes — they act automatically every turn.</p>
 <p><b>MYSTERY NODES:</b> ❓ can be a friend, a gift... an ambush, or a minigame challenge with prizes.</p>
 <p><b>POTIONS:</b> You can carry up to 3. Tap one in the top bar to drink it (most work only in combat).</p>
-<p><b>STATUSES:</b> ☠ Poison: damage each turn. 💪 Strength: +damage. 🌀 Weak: deal 25% less. 🎯 Vulnerable: take 50% more.</p>
+<p><b>HEROES:</b> each hero starts with a unique relic (tap relic icons in the top bar to read them) and most have a signature card.</p>
+<p><b>STATUSES:</b> ☠ Poison: lose HP each turn, drops by 1. 💪 Strength: +damage (can go negative). 💨 Dexterity: +Block from cards. 🌀 Weak: deal 25% less. 🎯 Vulnerable: take 50% more. 💫 Stun: skips its next move. ⛓️ Constrict: lose 3 HP each turn, 25% chance to be stunned. 🌱 Leech Seed: you drain 2 HP from it each turn. 🦋 Fly: take 50% less attack damage.</p>
+<p><b>POWERS</b> last for the rest of the fight once played.</p>
+<p><b>MERCHANT:</b> sells cards, 3 potions and 3 relics. You can purge one card per visit, and the price rises by 25 each time.</p>
 <p><b>SAVING:</b> Your climb is saved automatically at the map. One save slot — CONTINUE from the menu, or RESET SAVE to wipe it.</p>
 `;
