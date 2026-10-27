@@ -435,7 +435,7 @@ const CHARACTERS = [
     id: 'gunslinger', name: 'Calloway', role: 'The Gunslinger', sprite: 'gunslinger',
     maxHp: 70, relic: 'ammobelt', desc: 'Reloads, then empties the cylinder. A chain whip stuns and constricts.',
     companionText: 'Companion: fires 2 shots of 3 damage every turn.',
-    starterCards: ['strike','strike','strike','defend','defend','defend','reload','reload','quickdraw','whipwrap'],
+    starterCards: ['strike','strike','strike','defend','defend','defend','reload','quickreload','quickdraw','whipwrap'],
   },
   {
     id: 'ninja', name: 'Akane', role: 'The Ninja', sprite: 'ninja',
@@ -498,6 +498,7 @@ const CARDS = {
   grandbrew:   { name:'Grand Brew', type:'skl', cost:2, cls:'alchemist', rar:2, potion:2, exhaust:true, up:{cost:1}, desc:'Brew {potion} random potions. Exhaust.' },
   /* gunslinger — bullets & the chain whip */
   bullet:      { name:'Bullet', type:'atk', cost:0, cls:'gunslinger', rar:0, token:true, dmg:2, vuln:1, exhaust:true, desc:'Deal {dmg} damage. Apply {vuln} Vulnerable. Exhaust.' },
+  quickreload: { name:'Quick Reload', type:'skl', cost:0, cls:'gunslinger', rar:1, unique:true, bullets:3, exhaust:true, up:{bullets:4}, desc:'Add {bullets} Bullets to your hand. Exhaust.' },
   reload:      { name:'Reload', type:'skl', cost:1, cls:'gunslinger', rar:0, bullets:3, up:{bullets:4}, desc:'Add {bullets} Bullets to your hand.' },
   quickdraw:   { name:'Quick Draw', type:'atk', cost:1, cls:'gunslinger', rar:0, dmg:6, bullets:1, up:{dmg:9}, desc:'Deal {dmg} damage. Add {bullets} Bullet to your hand.' },
   dodgeroll:   { name:'Dodge Roll', type:'skl', cost:1, cls:'gunslinger', rar:0, block:6, bullets:1, up:{block:9}, desc:'Gain {block} Block. Add {bullets} Bullet to your hand.' },
@@ -516,7 +517,7 @@ const CARDS = {
   hemlock:     { name:'Hemlock', type:'skl', cost:1, cls:'ninja', rar:2, poison:10, exhaust:true, up:{poison:14}, desc:'Apply {poison} Poison. Exhaust.' },
   thousandcuts:{ name:'Thousand Cuts', type:'atk', cost:2, cls:'ninja', rar:2, dmg:3, hits:5, up:{dmg:4}, desc:'Deal {dmg} damage 5 times.' },
   /* faunus / fae — leech & energy */
-  leechseed:   { name:'Leech Seed', type:'skl', cost:1, cls:'fae', rar:1, unique:true, seed:3, up:{seed:4}, desc:'Drain 2 HP from the enemy each turn for {seed} turns.' },
+  leechseed:   { name:'Leech Seed', type:'skl', cost:0, cls:'fae', rar:1, unique:true, seed:3, up:{seed:4}, desc:'Drain 2 HP from the enemy each turn for {seed} turns.' },
   siphon:      { name:'Siphon', type:'atk', cost:1, cls:'fae', rar:0, dmg:6, heal:2, up:{dmg:9,heal:3}, desc:'Deal {dmg} damage. Heal {heal}.' },
   barkskin:    { name:'Bark Skin', type:'skl', cost:1, cls:'fae', rar:0, block:7, up:{block:10}, desc:'Gain {block} Block.' },
   dewdrop:     { name:'Dewdrop', type:'skl', cost:0, cls:'fae', rar:0, energy:1, exhaust:true, up:{energy:2}, desc:'Gain {energy} Energy. Exhaust.' },
@@ -525,7 +526,7 @@ const CARDS = {
   lifebloom:   { name:'Lifebloom', type:'atk', cost:2, cls:'fae', rar:2, dmg:7, aoe:true, lifesteal:true, exhaust:true, up:{dmg:10}, desc:'Deal {dmg} to ALL enemies. Heal the HP dealt. Exhaust.' },
   overgrowth:  { name:'Overgrowth', type:'pow', cost:2, cls:'fae', rar:2, energyPerTurn:1, up:{cost:1}, desc:'Gain 1 extra Energy every turn.' },
   /* priest / exorcist — healing & curses */
-  purify:      { name:'Purify', type:'skl', cost:0, cls:'priest', rar:1, unique:true, cleanse:true, draw:1, up:{draw:2}, desc:'Remove your Weak & Vulnerable. Draw {draw}.' },
+  purify:      { name:'Purify', type:'skl', cost:1, cls:'priest', rar:1, unique:true, cleanse:true, draw:1, up:{cost:0}, desc:'Remove your Weak & Vulnerable. Draw {draw}.' },
   smite:       { name:'Smite', type:'atk', cost:1, cls:'priest', rar:0, dmg:8, heal:2, up:{dmg:11,heal:3}, desc:'Deal {dmg} damage. Heal {heal}.' },
   blessedlight:{ name:'Blessed Light', type:'skl', cost:1, cls:'priest', rar:1, heal:7, up:{heal:11}, desc:'Heal {heal}.' },
   holyshield:  { name:'Holy Shield', type:'skl', cost:1, cls:'priest', rar:0, block:7, up:{block:10}, desc:'Gain {block} Block.' },
@@ -549,7 +550,8 @@ const TUNING = {
   ammoEvery: 3,              // Ammo Belt: every Nth attack (Bullets don't count)...
   ammoBullets: 2,            // ...adds this many Bullets
   escapeChance: 0.5,         // Cherry Blossom: chance an escape works
-  wingsFly: 3,               // Butterfly Wings: turns of Fly per combat
+  wingsFly: 3,               // Butterfly Wings: turns of Fly...
+  wingsRest: 3,              // ...then turns without, repeating all fight
   crossDex: 3,               // Holy Cross: Dexterity per combat
   handMax: 10,               // generated cards past this go to the discard pile
 };
@@ -612,7 +614,7 @@ const RELICS = {
   emptybottle:   { name:'Empty Bottle',    icon:'🍶', starter:'alchemist',  desc:'Brew 1 random potion at the start of every combat.' },
   ammobelt:      { name:'Ammo Belt',       icon:'🔫', starter:'gunslinger', desc:'Every 3rd Attack you play (not Bullets) adds 2 Bullets to your hand.' },
   cherryblossom: { name:'Cherry Blossom',  icon:'🌸', starter:'ninja',      desc:'Once per non-boss fight, try to FLEE: 50% chance to escape (no rewards).' },
-  butterflywings:{ name:'Butterfly Wings', icon:'🦋', starter:'fae',        desc:'Start each combat with 3 Fly (take 50% less attack damage).' },
+  butterflywings:{ name:'Butterfly Wings', icon:'🦋', starter:'fae',        desc:'Fly for 3 turns, then 3 turns without, repeating (Fly: take 50% less attack damage).' },
   holycross:     { name:'Holy Cross',      icon:'✝️', starter:'priest',     desc:'Start each combat with 3 Dexterity.' },
   /* found / bought */
   irontalisman: { name:'Iron Talisman', icon:'🛡️', desc:'+8 Max HP on pickup.' },

@@ -414,7 +414,6 @@ function startCombat(encounterKeys, isBoss) {
   if (hasRelic('bloodvial')) healPlayer(4);
   if (hasRelic('holycross')) cb.pDex += TUNING.crossDex;
   if (hasRelic('feathercharm')) cb.pDex += 1;
-  if (hasRelic('butterflywings')) cb.pFly = TUNING.wingsFly;
   if (hasRelic('emptybottle')) {
     for (let i = 0; i < TUNING.bottlePotions && run.potions.length < MAX_POTIONS; i++) gainPotion(randomPotion());
   }
@@ -508,6 +507,7 @@ function updateCombatUI() {
   if (cb.pStr > 0) pbits.push('💪' + cb.pStr);
   if (cb.pDex > 0) pbits.push('💨' + cb.pDex);
   if (cb.pFly > 0) pbits.push('🦋' + cb.pFly);
+  else if (hasRelic('butterflywings') && cb.turn > 0) pbits.push('🦋⏳' + (TUNING.wingsFly + TUNING.wingsRest - wingsPhase())); // turns until Fly returns
   if (cb.energyPerTurn > 0) pbits.push('⚡+' + cb.energyPerTurn);
   if (cb.pWeak > 0) pbits.push('🌀' + cb.pWeak);
   if (cb.pVuln > 0) pbits.push('🎯' + cb.pVuln);
@@ -577,6 +577,8 @@ function drawCards(n) {
   }
 }
 
+function wingsPhase() { return (cb.turn - 1) % (TUNING.wingsFly + TUNING.wingsRest); }
+
 // generated cards (Bullets): straight into hand; overflow goes to the discard pile
 function addToHand(key, n) {
   for (let i = 0; i < n; i++) {
@@ -591,6 +593,8 @@ function startPlayerTurn() {
   run.stats.turnsPlayed++;
   cb.pBlock = 0;
   const first = cb.turn === 1;
+  // Butterfly Wings: Fly for wingsFly turns, then wingsRest turns without, repeating
+  if (hasRelic('butterflywings') && wingsPhase() === 0) cb.pFly = Math.max(cb.pFly, TUNING.wingsFly);
   cb.energy = cb.maxEnergy + cb.energyPerTurn + (first && hasRelic('warhorn') ? 1 : 0);
   cb.selected = null;
   drawCards(5 + (first && hasRelic('hourglass') ? 2 : 0));
