@@ -433,7 +433,7 @@ const CHARACTERS = [
   },
   {
     id: 'gunslinger', name: 'Calloway', role: 'The Gunslinger', sprite: 'gunslinger',
-    maxHp: 70, relic: 'ammobelt', desc: 'Reloads, then empties the cylinder. A chain whip stuns and constricts.',
+    maxHp: 70, relic: 'ammobelt', desc: 'A gambler. Every Bullet may crit or ricochet, and Quick Reload rolls for 3-6 Bullets. A chain whip stuns and constricts.',
     companionText: 'Companion: fires 2 shots of 3 damage every turn.',
     starterCards: ['strike','strike','strike','defend','defend','defend','reload','quickreload','quickdraw','whipwrap'],
   },
@@ -497,8 +497,10 @@ const CARDS = {
   mastery:     { name:'Elixir of Mastery', type:'pow', cost:2, cls:'alchemist', rar:2, str:2, dex:2, up:{cost:1}, desc:'Gain {str} Strength and {dex} Dexterity.' },
   grandbrew:   { name:'Grand Brew', type:'skl', cost:2, cls:'alchemist', rar:2, potion:2, exhaust:true, up:{cost:1}, desc:'Brew {potion} random potions. Exhaust.' },
   /* gunslinger — bullets & the chain whip */
-  bullet:      { name:'Bullet', type:'atk', cost:0, cls:'gunslinger', rar:0, token:true, dmg:2, vuln:1, exhaust:true, desc:'Deal {dmg} damage. Apply {vuln} Vulnerable. Exhaust.' },
-  quickreload: { name:'Quick Reload', type:'skl', cost:0, cls:'gunslinger', rar:1, unique:true, bullets:3, exhaust:true, up:{bullets:4}, desc:'Add {bullets} Bullets to your hand. Exhaust.' },
+  bullet:      { name:'Bullet', type:'atk', cost:0, cls:'gunslinger', rar:0, token:true, dmg:2, vuln:1, gamble:true, exhaust:true, desc:'Deal {dmg} damage, {vuln} Vulnerable. 🎲 May crit or ricochet. Exhaust.' },
+  quickreload: { name:'Quick Reload', type:'skl', cost:0, cls:'gunslinger', rar:1, unique:true, exhaust:true,
+                 bullets:3, bulletsMax:6, bulletOdds:[0.65, 0.45, 0.25], // chance of at least +1 / +2 / +3 over the base
+                 up:{bullets:4, bulletsMax:7}, desc:'🎲 Gamble: add {bullets}-{bulletsMax} Bullets to your hand. Exhaust.' },
   reload:      { name:'Reload', type:'skl', cost:1, cls:'gunslinger', rar:0, bullets:3, up:{bullets:4}, desc:'Add {bullets} Bullets to your hand.' },
   quickdraw:   { name:'Quick Draw', type:'atk', cost:1, cls:'gunslinger', rar:0, dmg:6, bullets:1, up:{dmg:9}, desc:'Deal {dmg} damage. Add {bullets} Bullet to your hand.' },
   dodgeroll:   { name:'Dodge Roll', type:'skl', cost:1, cls:'gunslinger', rar:0, block:6, bullets:1, up:{block:9}, desc:'Gain {block} Block. Add {bullets} Bullet to your hand.' },
@@ -550,6 +552,8 @@ const TUNING = {
   ammoEvery: 3,              // Ammo Belt: every Nth attack (Bullets don't count)...
   ammoBullets: 2,            // ...adds this many Bullets
   escapeChance: 0.5,         // Cherry Blossom: chance an escape works
+  critChance: 0.25,          // Gunslinger Bullets: chance of a critical shot (double damage)...
+  ricochetChance: 0.15,      // ...or of a ricochet (+1 Bullet to your hand)
   wingsFly: 3,               // Butterfly Wings: turns of Fly...
   wingsRest: 3,              // ...then turns without, repeating all fight
   crossDex: 3,               // Holy Cross: Dexterity per combat
@@ -712,7 +716,7 @@ const HOW_TO_PLAY = `
 <p><b>COMPANIONS:</b> Mystery nodes may let you recruit one of the other heroes — they act automatically every turn.</p>
 <p><b>MYSTERY NODES:</b> ❓ can be a friend, a gift... an ambush, or a minigame challenge with prizes.</p>
 <p><b>POTIONS:</b> You can carry up to 3. Tap one in the top bar to drink it (most work only in combat).</p>
-<p><b>HEROES:</b> each hero starts with a unique relic (tap relic icons in the top bar to read them) and most have a signature card.</p>
+<p><b>HEROES:</b> each hero starts with a unique relic (tap relic icons in the top bar to read them) and most have a signature card. 🎲 Gunslinger Bullets have a 25% chance to crit (double damage) and a 15% chance to ricochet (+1 Bullet).</p>
 <p><b>STATUSES:</b> ☠ Poison: lose HP each turn, drops by 1. 💪 Strength: +damage (can go negative). 💨 Dexterity: +Block from cards. 🌀 Weak: deal 25% less. 🎯 Vulnerable: take 50% more. 💫 Stun: skips its next move. ⛓️ Constrict: lose 3 HP each turn, 25% chance to be stunned. 🌱 Leech Seed: you drain 2 HP from it each turn. 🦋 Fly: take 50% less attack damage.</p>
 <p><b>POWERS</b> last for the rest of the fight once played.</p>
 <p><b>MERCHANT:</b> sells cards, 3 potions and 3 relics. You can purge one card per visit, and the price rises by 25 each time.</p>

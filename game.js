@@ -737,15 +737,24 @@ function playCard(inst, target, opt) {
 
   const pEl = $('player-unit');
   const targets = c.aoe ? cb.enemies.filter(e => e.alive) : (target ? [target] : []);
+  // gambler's Bullets: one roll per shot for a critical hit or a ricochet
+  let luck = null;
+  if (c.gamble) {
+    const r = Math.random();
+    luck = r < TUNING.critChance ? 'crit' : r < TUNING.critChance + TUNING.ricochetChance ? 'ricochet' : null;
+  }
   let dealt = 0;
   if (c.dmg) {
     const hits = c.hits || 1;
     for (let i = 0; i < hits; i++) for (const t of targets) {
       if (!t.alive) continue;
       const cursed = c.cursedBonus && (t.weak > 0 || t.vuln > 0);
-      dealt += hitEnemy(t, cursed ? c.dmg * 2 : c.dmg);
+      let base = cursed ? c.dmg * 2 : c.dmg;
+      if (luck === 'crit') base = base * 2 + cb.pStr; // hitEnemy adds Strength once more, so the whole shot doubles
+      dealt += hitEnemy(t, base);
     }
   }
+  if (luck === 'crit') logLine('🎲 Critical shot! Double damage.');
   for (const t of targets) {
     if (!t.alive) continue;
     if (c.poison) { t.poison += c.poison; }
@@ -771,7 +780,21 @@ function playCard(inst, target, opt) {
   if (c.draw) drawCards(c.draw);
   if (c.gold) { gainGold(c.gold); sfx('gold'); toast('+' + c.gold + ' 🪙'); }
   if (c.potion) { for (let i = 0; i < c.potion; i++) gainPotion(randomPotion()); }
-  if (c.bullets) addToHand('bullet', c.bullets);
+  if (c.bullets) {
+    let n = c.bullets;
+    if (c.bulletOdds) {
+      const r = Math.random();
+      n += c.bulletOdds.filter(p => r < p).length;
+      logLine(`🎲 ${c.name} rolls ${n} Bullets!` + (n === c.bulletsMax ? ' JACKPOT!' : ''));
+      floatText(pEl, '🎲+' + n + '🔫', 'blockf');
+    }
+    addToHand('bullet', n);
+  }
+  if (luck === 'ricochet') {
+    addToHand('bullet', 1);
+    logLine('🎲 Ricochet! +1 Bullet.');
+    floatText(pEl, '+1🔫', 'blockf');
+  }
   if (c.type === 'atk' && !c.token && hasRelic('ammobelt')) {
     cb.attackCount++;
     if (cb.attackCount % TUNING.ammoEvery === 0) {
