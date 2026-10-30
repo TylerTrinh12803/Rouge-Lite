@@ -499,7 +499,7 @@ const CARDS = {
   /* gunslinger — bullets & the chain whip */
   bullet:      { name:'Bullet', type:'atk', cost:0, cls:'gunslinger', rar:0, token:true, dmg:2, vuln:1, gamble:true, exhaust:true, desc:'Deal {dmg} damage, {vuln} Vulnerable. 🎲 May crit or ricochet. Exhaust.' },
   quickreload: { name:'Quick Reload', type:'skl', cost:0, cls:'gunslinger', rar:1, unique:true, exhaust:true,
-                 bullets:3, bulletsMax:6, bulletOdds:[0.65, 0.45, 0.25], // chance of at least +1 / +2 / +3 over the base
+                 bullets:3, bulletsMax:6, bulletOdds:[0.60, 0.35, 0.15], // chance of at least +1 / +2 / +3: exactly 3/4/5/6 = 40/25/20/15%
                  up:{bullets:4, bulletsMax:7}, desc:'🎲 Gamble: add {bullets}-{bulletsMax} Bullets to your hand. Exhaust.' },
   reload:      { name:'Reload', type:'skl', cost:1, cls:'gunslinger', rar:0, bullets:3, up:{bullets:4}, desc:'Add {bullets} Bullets to your hand.' },
   quickdraw:   { name:'Quick Draw', type:'atk', cost:1, cls:'gunslinger', rar:0, dmg:6, bullets:1, up:{dmg:9}, desc:'Deal {dmg} damage. Add {bullets} Bullet to your hand.' },

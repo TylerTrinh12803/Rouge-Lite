@@ -33,7 +33,7 @@ Each hero starts with a unique relic; signature cards are starter-deck only.
 | Hero | Plays like | Signature card | Starting relic |
 |---|---|---|---|
 | Vesna, the Alchemist | brews potions, buffs & debuffs | **Transmute**: choose +2 Str & +2 Dex, or 2 Weak & 2 Vulnerable | **Empty Bottle**: brew 1 potion every combat |
-| Calloway, the Gunslinger | a gambler: Reload cards add 0-cost **Bullets** (2 dmg + 1 Vulnerable) that can crit (25%, double damage) or ricochet (15%, +1 Bullet); chain whip stuns & constricts | **Quick Reload** (0 energy): roll for 3-6 Bullets (65% for 4+, 45% for 5+, 25% for 6) | **Ammo Belt**: every 3rd attack (not Bullets) adds 2 Bullets |
+| Calloway, the Gunslinger | a gambler: Reload cards add 0-cost **Bullets** (2 dmg + 1 Vulnerable) that can crit (25%, double damage) or ricochet (15%, +1 Bullet); chain whip stuns & constricts | **Quick Reload** (0 energy): roll for 3-6 Bullets (40% for 3, 25% for 4, 20% for 5, 15% for 6) | **Ammo Belt**: every 3rd attack (not Bullets) adds 2 Bullets |
 | Akane, the Ninja | poison & stuns | **Smoke Screen**: 2 Weak, -2 Str, gain 2 Dex | **Cherry Blossom**: once per non-boss fight, 50% chance to flee |
 | Thistle, the Faunus | leech & energy | **Leech Seed** (0 energy): drain 2 HP for 3 turns | **Butterfly Wings**: Fly (50% less damage) for 3 turns, off for 3, repeating |
 | Sister Elara, the Exorcist | heals & curses | **Purify** (1 energy): remove your Weak & Vulnerable | **Holy Cross**: 3 Dexterity each combat |
